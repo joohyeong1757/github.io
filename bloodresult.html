@@ -89,7 +89,8 @@
     }
 
     .chart-container canvas {
-      display: inline-block; /* 가로로 나열 */
+      display: inline-block;
+      /* 가로로 나열 */
       height: 100% !important;
       /* 최소 너비는 데이터 포인트 수 * 60px 설정 (동적) */
       /* JS에서 chart.canvas.style.minWidth을 설정합니다 */
@@ -140,11 +141,10 @@
   <script>
     // 1) 데이터 정의
     const results = [
-      { date: '2024-09-30', wbc: 4.55, rbc: 3.10, hb: 9.8, hct: 31.2, platelet: 162, anc: 2400, lymph: 940, mono: 580, na: 140, k: 4.5, cl: 102, bun: 20, cr: 0.90, egfr_mdrd: 86.0, egfr_ckd_epi: 86.0, egfr_schwartz: 81.0, egfr_cg: 63.0, tb: 0.60, ast: 45, alt: 36, ca_total: 9.2, p: 3.8, t_protein: 6.8, albumin: 4.0, alk_phos: 110, ggt: 55, ca19_9: 680 },
-      { date: '11-01', wbc: 4.20, rbc: 2.95, hb: 9.3, hct: 29.8, platelet: 158, anc: 2500, lymph: 930, mono: 560, na: 139, k: 4.4, cl: 101, bun: 22, cr: 0.92, egfr_mdrd: 85.0, egfr_ckd_epi: 85.0, egfr_schwartz: 80.3, egfr_cg: 62.5, tb: 0.58, ast: 48, alt: 38, ca_total: 9.0, p: 3.7, t_protein: 6.9, albumin: 4.1, alk_phos: 112, ggt: 57, ca19_9: 700 },
-      { date: '12-18', wbc: 4.30, rbc: 3.00, hb: 9.5, hct: 30.5, platelet: 160, anc: 2450, lymph: 940, mono: 570, na: 141, k: 4.3, cl: 103, bun: 21, cr: 0.91, egfr_mdrd: 85.5, egfr_ckd_epi: 85.5, egfr_schwartz: 80.7, egfr_cg: 62.8, tb: 0.59, ast: 46, alt: 37, ca_total: 9.1, p: 3.8, t_protein: 6.9, albumin: 4.0, alk_phos: 111, ggt: 56, ca19_9: 690 },
-
-      { date: '2025-01-08', wbc: 3.99, rbc: 3.01, hb: 9.1, hct: 29.9, platelet: 152, anc: 2366, lymph: 930, mono: 571, na: 140, k: 4.9, cl: 101, bun: 22, cr: 0.89, egfr_mdrd: 85.3, egfr_ckd_epi: 85.3, egfr_schwartz: 80.3, egfr_cg: 62.7, tb: 0.62, ast: 44, alt: 35, ca_total: 9.1, p: 3.9, t_protein: 6.9, albumin: 4.1, alk_phos: 103, ggt: 54, ca19_9: 7900 },
+      { date: '2024-09-30', wbc: 4.55, rbc: 3.10, hb: 9.8, hct: 31.2, platelet: 162, anc: 2400, lymph: 940, mono: 580, na: 140, k: 4.5, cl: 102, bun: 20, cr: 0.90, egfr_mdrd: 86.0, egfr_ckd_epi: 86.0, egfr_schwartz: 81.0, egfr_cg: 63.0, tb: 0.60, ast: 45, alt: 36, ca_total: 9.2, p: 3.8, t_protein: 6.8, albumin: 4.0, alk_phos: 110, ggt: 55, ca19_9: 2200 },
+      { date: '11-01', wbc: 4.20, rbc: 2.95, hb: 9.3, hct: 29.8, platelet: 158, anc: 2500, lymph: 930, mono: 560, na: 139, k: 4.4, cl: 101, bun: 22, cr: 0.92, egfr_mdrd: 85.0, egfr_ckd_epi: 85.0, egfr_schwartz: 80.3, egfr_cg: 62.5, tb: 0.58, ast: 48, alt: 38, ca_total: 9.0, p: 3.7, t_protein: 6.9, albumin: 4.1, alk_phos: 112, ggt: 57, ca19_9: 10000 },
+      { date: '12-18', wbc: 4.30, rbc: 3.00, hb: 9.5, hct: 30.5, platelet: 160, anc: 2450, lymph: 940, mono: 570, na: 141, k: 4.3, cl: 103, bun: 21, cr: 0.91, egfr_mdrd: 85.5, egfr_ckd_epi: 85.5, egfr_schwartz: 80.7, egfr_cg: 62.8, tb: 0.59, ast: 46, alt: 37, ca_total: 9.1, p: 3.8, t_protein: 6.9, albumin: 4.0, alk_phos: 111, ggt: 56, ca19_9: 7900 },
+      { date: '2025-01-08', wbc: 3.99, rbc: 3.01, hb: 9.1, hct: 29.9, platelet: 152, anc: 2366, lymph: 930, mono: 571, na: 140, k: 4.9, cl: 101, bun: 22, cr: 0.89, egfr_mdrd: 85.3, egfr_ckd_epi: 85.3, egfr_schwartz: 80.3, egfr_cg: 62.7, tb: 0.62, ast: 44, alt: 35, ca_total: 9.1, p: 3.9, t_protein: 6.9, albumin: 4.1, alk_phos: 103, ggt: 54, ca19_9: 3700 },
       { date: '01-31', wbc: 4.13, rbc: 2.84, hb: 9.0, hct: 28.3, platelet: 140, anc: 2497, lymph: 950, mono: 561, na: 138, k: 4.8, cl: 100, bun: 24, cr: 0.93, egfr_mdrd: 87.4, egfr_ckd_epi: 87.4, egfr_schwartz: 83.1, egfr_cg: 64.9, tb: 0.58, ast: 53, alt: 42, ca_total: 8.8, p: 3.8, t_protein: 6.8, albumin: 4.0, alk_phos: 103, ggt: 58, ca19_9: 1720 },
       { date: '02-19', wbc: 4.18, rbc: 2.81, hb: 8.9, hct: 28.5, platelet: 160, anc: 2604, lymph: 920, mono: 580, na: 141, k: 4.6, cl: 102, bun: 23, cr: 0.90, egfr_mdrd: 88.2, egfr_ckd_epi: 88.2, egfr_schwartz: 82.0, egfr_cg: 65.3, tb: 0.60, ast: 50, alt: 38, ca_total: 9.0, p: 3.9, t_protein: 6.9, albumin: 4.0, alk_phos: 116, ggt: 51, ca19_9: 1280 },
       { date: '03-12', wbc: 3.93, rbc: 2.84, hb: 9.0, hct: 29.5, platelet: 160, anc: 2701, lymph: 940, mono: 590, na: 142, k: 4.4, cl: 99, bun: 22, cr: 0.92, egfr_mdrd: 86.0, egfr_ckd_epi: 86.0, egfr_schwartz: 81.4, egfr_cg: 63.8, tb: 0.57, ast: 48, alt: 37, ca_total: 8.9, p: 3.7, t_protein: 6.8, albumin: 3.9, alk_phos: 116, ggt: 50, ca19_9: 870 },
@@ -212,6 +212,9 @@
     let chart;
     const ctx = document.getElementById('chart').getContext('2d');
     function showChart(key, label) {
+      const pointWidth = 60;
+      ctx.canvas.style.minWidth = `${results.length * pointWidth}px`;
+      ctx.canvas.style.height = '100%';
       const container = document.getElementById('chart-container');
       container.style.display = 'block';
       container.scrollIntoView({ behavior: 'smooth' });
