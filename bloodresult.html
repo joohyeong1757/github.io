@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>혈액검사 결과</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/css/bootstrap.min.css" rel="stylesheet"
+    integrity="sha384-SgOJa3DmI69IUzQ2PVdRZhwQ+dy64/BUtbMJw1MZ8t5HZApcHrRKUc4W0kG879m7" crossorigin="anonymous">
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 1rem;
+      max-width: 1000px;
+      margin: auto;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 1rem;
+    }
+
+    .table-container {
+      position: relative;
+      overflow-x: auto;
+      margin-bottom: 1rem;
+    }
+
+    /* 오른쪽 스크롤 가능 표시 그라데이션 */
+    .table-container::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 30px;
+      height: 100%;
+      pointer-events: none;
+      background: linear-gradient(to left, rgba(255, 255, 255, 1), rgba(255, 255, 255, 0));
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th,
+    td {
+      text-align: center;
+      white-space: nowrap;
+      border: 1px solid #dee2e6;
+    }
+
+    th[scope="row"] {
+      cursor: pointer;
+      color: #007bff;
+      transition: background-color 0.2s, color 0.2s;
+      background: #fff;
+    }
+
+    th[scope="row"]:hover {
+      background-color: #e9ecef;
+      color: #0056b3;
+    }
+
+    /* 첫 번째 열 고정 */
+    table th:first-child,
+    table td:first-child {
+      position: sticky;
+      left: 0;
+      background: #fff;
+      z-index: 1;
+    }
+
+    /* 헤더 행 고정 */
+    table thead th {
+      position: sticky;
+      top: 0;
+      background: #fff;
+      z-index: 2;
+    }
+
+    /* 헤더 첫 열 우선 순위 높임 */
+    table thead th:first-child {
+      z-index: 3;
+    }
+
+    /* 그래프 컨테이너: 너비의 80%, 높이 = 너비 (정사각형) */
+    .chart-container {
+      position: relative;
+      width: 800px;
+      aspect-ratio: 70%;
+      /* 너비*/
+      display: none;
+      margin: 1rem auto 0;
+      text-align: center;
+    }
+
+    .chart-container canvas {
+      width: 100% !important;
+      height: 100% !important;
+      display: block;
+      margin: 0 auto;
+    }
+
+    @media (max-width: 600px) {
+      body {
+        padding: 0.5rem;
+      }
+
+      .chart-container {
+        width: 90%;
+        aspect-ratio: 0.9;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <h1>혈액검사 결과</h1>
+
+  <div class="table-container">
+    <table class="table table-bordered">
+      <thead>
+        <tr>
+          <th>항목</th>
+          <!-- JS로 삽입될 날짜 헤더 -->
+        </tr>
+      </thead>
+      <tbody id="data-table">
+        <!-- JS로 삽입될 항목 행 -->
+      </tbody>
+    </table>
+  </div>
+
+  <div class="chart-container" id="chart-container">
+    <canvas id="chart"></canvas>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+  <script>
+    // 1) 데이터 정의
+    const results = [
+      { date: '2024-09-30', wbc: 4.55, rbc: 3.10, hb: 9.8, hct: 31.2, platelet: 162, anc: 2400, lymph: 940, mono: 580, na: 140, k: 4.5, cl: 102, bun: 20, cr: 0.90, egfr_mdrd: 86.0, egfr_ckd_epi: 86.0, egfr_schwartz: 81.0, egfr_cg: 63.0, tb: 0.60, ast: 45, alt: 36, ca_total: 9.2, p: 3.8, t_protein: 6.8, albumin: 4.0, alk_phos: 110, ggt: 55, ca19_9: 680 },
+      { date: '11-01', wbc: 4.20, rbc: 2.95, hb: 9.3, hct: 29.8, platelet: 158, anc: 2500, lymph: 930, mono: 560, na: 139, k: 4.4, cl: 101, bun: 22, cr: 0.92, egfr_mdrd: 85.0, egfr_ckd_epi: 85.0, egfr_schwartz: 80.3, egfr_cg: 62.5, tb: 0.58, ast: 48, alt: 38, ca_total: 9.0, p: 3.7, t_protein: 6.9, albumin: 4.1, alk_phos: 112, ggt: 57, ca19_9: 700 },
+      { date: '12-18', wbc: 4.30, rbc: 3.00, hb: 9.5, hct: 30.5, platelet: 160, anc: 2450, lymph: 940, mono: 570, na: 141, k: 4.3, cl: 103, bun: 21, cr: 0.91, egfr_mdrd: 85.5, egfr_ckd_epi: 85.5, egfr_schwartz: 80.7, egfr_cg: 62.8, tb: 0.59, ast: 46, alt: 37, ca_total: 9.1, p: 3.8, t_protein: 6.9, albumin: 4.0, alk_phos: 111, ggt: 56, ca19_9: 690 },
+      
+      { date: '2025-01-08', wbc: 3.99, rbc: 3.01, hb: 9.1, hct: 29.9, platelet: 152, anc: 2366, lymph: 930, mono: 571, na: 140, k: 4.9, cl: 101, bun: 22, cr: 0.89, egfr_mdrd: 85.3, egfr_ckd_epi: 85.3, egfr_schwartz: 80.3, egfr_cg: 62.7, tb: 0.62, ast: 44, alt: 35, ca_total: 9.1, p: 3.9, t_protein: 6.9, albumin: 4.1, alk_phos: 103, ggt: 54, ca19_9: 7900 },
+      { date: '01-31', wbc: 4.13, rbc: 2.84, hb: 9.0, hct: 28.3, platelet: 140, anc: 2497, lymph: 950, mono: 561, na: 138, k: 4.8, cl: 100, bun: 24, cr: 0.93, egfr_mdrd: 87.4, egfr_ckd_epi: 87.4, egfr_schwartz: 83.1, egfr_cg: 64.9, tb: 0.58, ast: 53, alt: 42, ca_total: 8.8, p: 3.8, t_protein: 6.8, albumin: 4.0, alk_phos: 103, ggt: 58, ca19_9: 1720 },
+      { date: '02-19', wbc: 4.18, rbc: 2.81, hb: 8.9, hct: 28.5, platelet: 160, anc: 2604, lymph: 920, mono: 580, na: 141, k: 4.6, cl: 102, bun: 23, cr: 0.90, egfr_mdrd: 88.2, egfr_ckd_epi: 88.2, egfr_schwartz: 82.0, egfr_cg: 65.3, tb: 0.60, ast: 50, alt: 38, ca_total: 9.0, p: 3.9, t_protein: 6.9, albumin: 4.0, alk_phos: 116, ggt: 51, ca19_9: 1280 },
+      { date: '03-12', wbc: 3.93, rbc: 2.84, hb: 9.0, hct: 29.5, platelet: 160, anc: 2701, lymph: 940, mono: 590, na: 142, k: 4.4, cl: 99, bun: 22, cr: 0.92, egfr_mdrd: 86.0, egfr_ckd_epi: 86.0, egfr_schwartz: 81.4, egfr_cg: 63.8, tb: 0.57, ast: 48, alt: 37, ca_total: 8.9, p: 3.7, t_protein: 6.8, albumin: 3.9, alk_phos: 116, ggt: 50, ca19_9: 870 },
+      { date: '04-02', wbc: 3.34, rbc: 2.76, hb: 8.7, hct: 28.1, platelet: 109, anc: 2550, lymph: 920, mono: 600, na: 139, k: 4.3, cl: 98, bun: 24, cr: 0.95, egfr_mdrd: 84.0, egfr_ckd_epi: 84.0, egfr_schwartz: 79.9, egfr_cg: 61.2, tb: 0.55, ast: 46, alt: 36, ca_total: 9.0, p: 3.8, t_protein: 6.7, albumin: 3.8, alk_phos: 109, ggt: 51, ca19_9: 740 },
+      { date: '04-22', wbc: 4.03, rbc: 2.76, hb: 8.7, hct: 28.2, platelet: 109, anc: 2620, lymph: 930, mono: 610, na: 141, k: 4.2, cl: 100, bun: 23, cr: 0.94, egfr_mdrd: 85.0, egfr_ckd_epi: 85.0, egfr_schwartz: 80.2, egfr_cg: 63.0, tb: 0.58, ast: 47, alt: 36, ca_total: 9.2, p: 3.9, t_protein: 6.8, albumin: 4.0, alk_phos: 109, ggt: 53, ca19_9: 760 },
+      { date: '05-16', wbc: 3.25, rbc: 2.58, hb: 7.9, hct: 26.0, platelet: 110, anc: 2550, lymph: 940, mono: 580, na: 140, k: 4.0, cl: 101, bun: 25, cr: 0.88, egfr_mdrd: 87.0, egfr_ckd_epi: 87.0, egfr_schwartz: 82.0, egfr_cg: 64.0, tb: 0.60, ast: 50, alt: 38, ca_total: 9.1, p: 3.7, t_protein: 6.9, albumin: 4.0, alk_phos: 110, ggt: 61, ca19_9: 850 },
+      { date: '06-05', wbc: 4.12, rbc: 2.70, hb: 8.1, hct: 27.4, platelet: 101, anc: 2587, lymph: 911, mono: 420, na: 140, k: 4.0, cl: 105, bun: 20, cr: 0.93, egfr_mdrd: 81.0, egfr_ckd_epi: 84.6, egfr_schwartz: 76.1, egfr_cg: 62.9, tb: 0.62, ast: 44, alt: 35, ca_total: 9.1, p: 3.9, t_protein: 6.9, albumin: 4.1, alk_phos: 117, ggt: 66, ca19_9: 980 },
+      { date: '06-25', wbc: 5.49, rbc: 2.75, hb: 8.3, hct: 27.6, platelet: 99, anc: 3827, lymph: 889, mono: 533, na: 140, k: 4.0, cl: 105, bun: 25, cr: 0.86, egfr_mdrd: 88.7, egfr_ckd_epi: 89.7, egfr_schwartz: 82.6, egfr_cg: 68.1, tb: 0.70, ast: 53, alt: 42, ca_total: 8.7, p: 3.6, t_protein: 6.9, albumin: 4.1, alk_phos: 111, ggt: 95, ca19_9: 1740 },
+      { date: '07-15', wbc: 5.48, rbc: 2.62, hb: 8.1, hct: 26.4, platelet: 91, anc: 3935, lymph: 970, mono: 362, na: 141, k: 3.9, cl: 108, bun: 22, cr: 0.85, egfr_mdrd: 89.9, egfr_ckd_epi: 90.2, egfr_schwartz: 82.8, egfr_cg: 66.8, tb: 0.66, ast: 42, alt: 35, ca_total: 9.0, p: 3.6, t_protein: 6.7, albumin: 3.8, alk_phos: 104, ggt: 95, ca19_9: 1900 }
+    ];
+
+    // 2) 표시할 필드와 레이블 정의
+    const fields = [
+      { key: 'hb', label: '헤모글로빈 (g/dL)' },
+      { key: 'wbc', label: '백혈구수 (10³/µL)' },
+      { key: 'rbc', label: '적혈구수 (10¹²/µL)' },
+      { key: 'hct', label: '헤마토크릿 (%)' },
+      { key: 'platelet', label: '혈소판 (10³/µL)' },
+      { key: 'anc', label: 'ANC (절대 호중구 수)' },
+      { key: 'lymph', label: '림프구 (cells/µL)' },
+      { key: 'mono', label: '단핵구 (cells/µL)' },
+      { key: 'na', label: 'Na (mmol/L)' },
+      { key: 'k', label: 'K (mmol/L)' },
+      { key: 'cl', label: 'Cl (mmol/L)' },
+      { key: 'bun', label: 'BUN (mg/dL)' },
+      { key: 'cr', label: 'Cr (mg/dL)' },
+      { key: 'egfr_mdrd', label: 'eGFR‑MDRD' },
+      { key: 'egfr_ckd_epi', label: 'eGFR‑CKD‑EPI' },
+      { key: 'egfr_schwartz', label: 'eGFR‑Schwartz' },
+      { key: 'egfr_cg', label: 'eGFR‑Cockcroft‑Gault' },
+      { key: 'tb', label: '총빌리루빈 (mg/dL)' },
+      { key: 'ast', label: 'AST (U/L)' },
+      { key: 'alt', label: 'ALT (U/L)' },
+      { key: 'ca_total', label: '총칼슘 (mg/dL)' },
+      { key: 'p', label: '인 (mg/dL)' },
+      { key: 't_protein', label: '총단백 (g/dL)' },
+      { key: 'albumin', label: '알부민 (g/dL)' },
+      { key: 'alk_phos', label: 'ALP (U/L)' },
+      { key: 'ggt', label: 'GGT (U/L)' },
+      { key: 'ca19_9', label: 'CA19‑9 (U/mL)' }
+    ];
+
+    // 테이블 헤더·바디 생성 유지
+    const theadRow = document.querySelector('thead tr');
+    results.forEach(r => {
+      const th = document.createElement('th'); th.textContent = r.date; theadRow.appendChild(th);
+    });
+    const tbody = document.getElementById('data-table');
+    fields.forEach(f => {
+      const tr = document.createElement('tr');
+      const th = document.createElement('th');
+      th.setAttribute('scope', 'row');
+      th.setAttribute('data-key', f.key);
+      th.textContent = f.label;
+      tr.appendChild(th);
+      results.forEach(r => {
+        const td = document.createElement('td');
+        td.textContent = r[f.key] != null ? r[f.key] : '';
+        tr.appendChild(td);
+      });
+      tbody.appendChild(tr);
+    });
+
+    // 그래프 표시 및 스크롤 이동 유지
+    let chart;
+    const ctx = document.getElementById('chart').getContext('2d');
+    function showChart(key, label) {
+      const container = document.getElementById('chart-container');
+      container.style.display = 'block';
+      container.scrollIntoView({ behavior: 'smooth' });
+      if (chart) chart.destroy();
+      chart = new Chart(ctx, {
+        type: 'line',
+        data: { labels: results.map(r => r.date), datasets: [{ label, data: results.map(r => r[key]), fill: false, tension: 0.2 }] },
+        options: {
+          events: ['mousemove', 'click', 'touchstart', 'touchmove'],
+          interaction: { mode: 'nearest', intersect: false },
+          plugins: { tooltip: { enabled: true, mode: 'nearest', intersect: false, borderRadius: 4, callbacks: { title: () => '', label: ctx => `${ctx.parsed.y}` } } },
+          scales: { x: { title: { display: true, text: '날짜' } }, y: { beginAtZero: false } }
+        }
+      });
+    }
+    document.querySelectorAll('#data-table th[data-key]').forEach(th => th.addEventListener('click', () => showChart(th.getAttribute('data-key'), th.textContent)));
+  </script>
+</body>
+
+</html>
