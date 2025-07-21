@@ -78,7 +78,8 @@
     }
 
     th[data-tooltip]::after {
-      font-size: 12px;    /* ← 툴팁 텍스트 크기 */
+      font-size: 12px;
+      /* ← 툴팁 텍스트 크기 */
       content: attr(data-tooltip);
       position: absolute;
       bottom: 100%;
@@ -94,7 +95,7 @@
       transition: opacity 0.1s ease-in;
       z-index: 10;
     }
-    
+
 
     th[data-tooltip]:hover::after {
       opacity: 1;
@@ -249,29 +250,46 @@
 
       tbody.appendChild(tr);
     });
+    // 단위 매핑 생성
+    const unitMap = fields.reduce((map, f) => {
+      const m = f.label.match(/\((.*?)\)/);
+      map[f.key] = m ? m[1] : '';
+      return map;
+    }, {});
 
-    // 차트 표시
+    // 차트 설정
     let chart;
     const ctx = document.getElementById('chart').getContext('2d');
     function showChart(key, label) {
-      const c = document.getElementById('chart-container');
-      c.style.display = 'block'; c.scrollIntoView({ behavior: 'smooth' });
+      const container = document.getElementById('chart-container');
+      container.style.display = 'block'; container.scrollIntoView({ behavior: 'smooth' });
       if (chart) chart.destroy();
       chart = new Chart(ctx, {
         type: 'line',
         data: { labels: results.map(r => r.date), datasets: [{ label, data: results.map(r => r[key]), fill: false, tension: 0.2 }] },
         options: {
           maintainAspectRatio: false,
-          events: ['mousemove', 'click', 'touchstart', 'touchmove'],
-          interaction: { mode: 'nearest', intersect: false },
-          plugins: { tooltip: { enabled: true, mode: 'nearest', intersect: false, borderRadius: 4, callbacks: { title: () => '', label: ctx => `${ctx.parsed.y}` } } },
+          plugins: {
+            tooltip: {
+              enabled: true,
+              mode: 'nearest',
+              intersect: false,
+              borderRadius: 4,
+              callbacks: {
+                title: () => '',
+                label: context => {
+                  const value = context.parsed.y;
+                  const unit = unitMap[key];
+                  return unit ? `${value} ${unit}` : `${value}`;
+                }
+              }
+            }
+          },
           scales: { x: { title: { display: true, text: '날짜' } }, y: { beginAtZero: false } }
         }
       });
     }
-    document.querySelectorAll('#data-table th[data-key]').forEach(th =>
-      th.addEventListener('click', () => showChart(th.dataset.key, th.textContent))
-    );
+    document.querySelectorAll('#data-table th[data-key]').forEach(th => th.addEventListener('click', () => showChart(th.dataset.key, th.textContent)));
   </script>
 </body>
 
