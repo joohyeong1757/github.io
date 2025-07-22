@@ -3,6 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script>
+    if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+    window.addEventListener('load', () => window.scrollTo(0,0));
+  </script>
   <title>혈액검사 결과</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous" />
 
@@ -72,15 +76,15 @@ table thead th{
 
     /* ------- 버튼 영역 ------- */
     #filter-buttons{
-      display:flex; flex-wrap:wrap; gap:.5rem;
-      padding:0; margin:0 0 24px 0; justify-content:flex-start;
+      display:flex; flex-wrap:wrap; gap:.3rem;
+      padding:0; margin:0 0 15px 0; justify-content:flex-start;
     }
     #filter-buttons .btn{
       flex:1 1 auto;          /* ★ 같은 줄에서 남은 폭을 균등 분배 */
   min-width:max-content;  /* ★ 글자보다 작아지지 않게 */
   white-space:nowrap;     /* 두 줄 금지 */
-  height:46px;
-  line-height:46px;
+  height:40px;
+  line-height:40px;
   padding:0 14px;         /* 기본 패딩(줄마다 자동으로 더 넓어짐) */
   box-sizing:border-box;
     }
@@ -144,9 +148,9 @@ table thead th{
     @media (max-width:600px){
       body{ padding:.5rem; }
       .chart-container{ width:100%; height:500px; }
-      .treat-table col.col-date{ width:32%; }
+      .treat-table col.col-date{ width:28%; }
   .treat-table col.col-type{ width:22%; }
-  .treat-table col.col-desc{ width:46%; }
+  .treat-table col.col-desc{ width:50%; }
     }
   </style>
 </head>
@@ -157,6 +161,7 @@ table thead th{
   <!-- 필터 버튼 -->
   <div id="filter-buttons" role="group">
     <button class="btn btn-outline-secondary active" data-cat="all">전체보기</button>
+    <button id="btn-tx" class="btn btn-outline-secondary">치료 및 검사결과</button>
     <button class="btn btn-outline-secondary" data-cat="tumor">종양수치</button>
     <button class="btn btn-outline-secondary" data-cat="infection">면역기능</button>
     <button class="btn btn-outline-secondary" data-cat="anemia">빈혈 여부 등</button>
@@ -167,7 +172,6 @@ table thead th{
     <button class="btn btn-outline-secondary" data-cat="electrolyte">체액/전해질 균형</button>
     <button class="btn btn-outline-secondary" data-cat="nutrition">영양 상태/간단백 생성능</button>
     <button class="btn btn-outline-secondary" data-cat="bone">뼈 및 무기질 대사 상태</button>
-    <button id="btn-tx" class="btn btn-outline-secondary">치료 및 검사결과</button>
   </div>
 
   <!-- 혈액검사 표 -->
