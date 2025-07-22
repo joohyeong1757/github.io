@@ -16,7 +16,7 @@
     h1{ text-align:center; margin-bottom:1rem; }
 
     /* ------- 표 ------- */
-    .table-container .treat-table{ position:relative; overflow-x:auto; margin-bottom:1rem; }
+    .table-container{ position:relative; overflow-x:auto; margin-bottom:1rem; }
     table{ width:100%; border-collapse:collapse; }
     th,td{
       text-align:center; white-space:nowrap;
@@ -96,15 +96,28 @@ table thead th{
     .treat-table th,.treat-table td{
       border:1px solid #dee2e6; padding:.5rem .6rem;
       vertical-align:top; text-align:left;
+      white-space:normal;
+      word-break:break-word;   /* 긴 단어/영어도 강제 줄바꿈 */
     }
     .treat-table thead th{ background:#f8f9fa; text-align:center; }
     .treat-title{
       background:#e9ecef; font-weight:700; text-align:center; font-size:1.05rem;
     }
-    .treat-table th:nth-child(1),
-    .treat-table td:nth-child(1){ width:120px; }
-    .treat-table th:nth-child(2),
-    .treat-table td:nth-child(2){ width:90px; }
+    /* 치료표 공통 */
+.treat-wrap{ margin-top:2rem; overflow-x:hidden; }  /* 스크롤 대신 줄바꿈으로 처리 */
+
+.treat-table{
+  width:100%;
+  table-layout:fixed;          /* 열폭 colgroup 기준으로 고정 */
+  border-collapse:collapse;
+  font-size:0.9rem;
+}
+
+/* 열 폭 통일 (데스크톱 기준 비율 예시) */
+.treat-table col.col-date{ width:20%; }
+.treat-table col.col-type{ width:15%; }
+.treat-table col.col-desc{ width:65%; }
+ 
 
 
       /* 1) 컨테이너가 위로는 잘 보이게 */
@@ -131,7 +144,9 @@ table thead th{
     @media (max-width:600px){
       body{ padding:.5rem; }
       .chart-container{ width:100%; height:500px; }
-      .treat-table{ width: 100%;}
+      .treat-table col.col-date{ width:32%; }
+  .treat-table col.col-type{ width:22%; }
+  .treat-table col.col-desc{ width:46%; }
     }
   </style>
 </head>
@@ -174,6 +189,11 @@ table thead th{
   <div id="tx-section" class="treat-wrap d-none">
     <!-- 수술 및 보조 치료 -->
     <table class="treat-table">
+      <colgroup>
+        <col class="col-date">
+        <col class="col-type">
+        <col class="col-desc">
+      </colgroup>
       <thead>
         <tr><th colspan="3" class="treat-title">수술 및 보조 치료</th></tr>
         <tr><th>날짜</th><th>구분</th><th>내용</th></tr>
@@ -190,6 +210,11 @@ table thead th{
 
     <!-- 1차 항암 -->
     <table class="treat-table">
+      <colgroup>
+        <col class="col-date">
+        <col class="col-type">
+        <col class="col-desc">
+      </colgroup>
       <thead>
         <tr><th colspan="3" class="treat-title">1차 항암: 임핀지 병행 요법</th></tr>
         <tr><th>날짜</th><th>구분</th><th>내용</th></tr>
@@ -205,6 +230,11 @@ table thead th{
 
     <!-- 2차 항암 -->
     <table class="treat-table">
+      <colgroup>
+        <col class="col-date">
+        <col class="col-type">
+        <col class="col-desc">
+      </colgroup>
       <thead>
         <tr><th colspan="3" class="treat-title">2차 항암: 폴폭스 요법</th></tr>
         <tr><th>날짜</th><th>구분</th><th>내용</th></tr>
