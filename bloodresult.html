@@ -20,6 +20,7 @@
       margin-bottom: 1rem;
     }
 
+
     .table-container {
       position: relative;
       overflow-x: auto;
@@ -115,6 +116,62 @@
       height: 100% !important;
     }
 
+    :root {
+      --btn-h: 48px;
+      --gap: .5rem;
+    }
+
+    /* 전체 레이아웃: 왼쪽 고정, 오른쪽 가변 */
+    #filter-buttons.filters-row {
+      display: flex;
+      gap: var(--gap);
+      padding: 0 .5rem;
+      align-items: stretch;
+      /* 왼쪽 버튼 세로로 꽉 차도록 */
+      margin-bottom: 24px;
+      /* 버튼과 표 사이 여백 */
+    }
+
+    /* 전체보기 버튼 */
+    #filter-buttons .btn-all {
+      flex: 0 0 140px;
+      /* 너비 고정 */
+      border-radius: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      /* 높이는 부모 높이에 맞춰 자동 늘어남 (align-items:stretch 영향) */
+    }
+
+    /* 오른쪽 영역 */
+    #filter-buttons .other-btns {
+      flex: 1;
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--gap);
+      align-content: flex-start;
+      position: relative;
+    }
+
+    /* 개별 버튼: 기본은 내용만큼만, 줄바꿈 금지 */
+    #filter-buttons .other-btns .btn {
+      white-space: nowrap;
+      height: var(--btn-h);
+      line-height: var(--btn-h);
+      flex: 0 0 auto;
+      /* 기본은 내용폭 */
+      padding: 0 18px;
+    }
+
+    /* active 색상 */
+    #filter-buttons .btn.active {
+      background: #0d6efd;
+      color: #fff;
+    }
+
+    /* 데스크톱 */
+    @media (max-width:600px) {}
+
     @media (min-width: 601px) and (max-width: 1024px) {
       .chart-container {
         width: 95%;
@@ -131,12 +188,35 @@
         width: 100%;
         height: 500px;
       }
+
+      #filter-buttons {
+        margin-bottom: 16px;
+      }
+
+      /* 모바일 */
     }
   </style>
 </head>
 
 <body>
   <h1>혈액검사 결과</h1>
+  <!-- 필터 버튼 -->
+  <div id="filter-buttons" class="filters-row" role="group">
+    <button class="btn btn-outline-secondary active btn-all" data-cat="all">전체보기</button>
+
+    <div class="other-btns">
+      <button class="btn btn-outline-secondary" data-cat="tumor">종양수치</button>
+      <button class="btn btn-outline-secondary" data-cat="infection">면역기능</button>
+      <button class="btn btn-outline-secondary" data-cat="anemia">빈혈 여부 등</button>
+      <button class="btn btn-outline-secondary" data-cat="bleeding">혈소판</button>
+      <button class="btn btn-outline-secondary" data-cat="kidney">신장 기능</button>
+      <button class="btn btn-outline-secondary" data-cat="liver">간 기능 및 간세포 손상</button>
+      <button class="btn btn-outline-secondary" data-cat="cholestasis">담즙 정체 여부</button>
+      <button class="btn btn-outline-secondary" data-cat="electrolyte">체액/전해질 균형</button>
+      <button class="btn btn-outline-secondary" data-cat="nutrition">영양 상태/간단백 생성능</button>
+      <button class="btn btn-outline-secondary" data-cat="bone">뼈 및 무기질 대사 상태</button>
+    </div>
+  </div>
   <div class="table-container">
     <table class="table table-bordered">
       <thead>
@@ -200,6 +280,26 @@
       { key: 'alk_phos', label: 'ALP (U/L)' },
       { key: 'ggt', label: 'GGT (U/L)' }
     ];
+
+    // 카테고리
+    const categories = {
+      tumor: ['ca19_9'],
+      infection: ['wbc', 'anc', 'lymph', 'mono'],
+      anemia: ['rbc', 'hb', 'hct'],
+      bleeding: ['platelet'],
+      kidney: ['cr', 'bun', 'egfr_mdrd', 'egfr_ckd_epi', 'egfr_schwartz', 'egfr_cg'],
+      liver: ['ast', 'alt', 'tb'],
+      cholestasis: ['alk_phos', 'ggt'],
+      electrolyte: ['na', 'k', 'cl'],
+      nutrition: ['t_protein', 'albumin'],
+      bone: ['ca_total', 'p']
+    };
+
+    // 역매핑(키→카테고리) 만들어두면 편합니다
+    const catIndex = Object.fromEntries(
+      Object.entries(categories).flatMap(([cat, keys]) => keys.map(k => [k, cat]))
+    );
+
     // 기준값(threshold) 맵
     const thresholds = {
       ca19_9: 37,
@@ -233,6 +333,12 @@
         tooltip = paren[2].trim();
       }
 
+      // ▼ 여기서 카테고리 지정
+      tr.dataset.cat = catIndex[f.key] || 'all';
+      const cat = Object.keys(categories).find(c => categories[c].includes(f.key)) || 'all';
+      tr.dataset.cat = cat;
+      tr.appendChild(th);
+
       // eGFR별 특별 처리
       switch (f.key) {
         case 'egfr_mdrd':
@@ -265,7 +371,71 @@
       return map;
     }, {});
 
-    
+    // ★ 여기부터 (테이블 생성이 끝난 바로 다음)
+    function filterTable(cat) {
+      document.querySelectorAll('#data-table tr').forEach(row => {
+        row.style.display = (cat === 'all' || row.dataset.cat === cat) ? '' : 'none';
+      });
+    }
+
+    // 버튼 이벤트
+    document.querySelectorAll('#filter-buttons button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('#filter-buttons button').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        filterTable(btn.dataset.cat);
+      });
+    });
+
+    // 초기 상태: 전체보기
+    filterTable('all');
+
+    function spreadRowWidths() {
+      const area = document.querySelector('#filter-buttons .other-btns');
+      const btns = [...area.querySelectorAll('.btn')];
+
+      // 초기화 (리사이즈 때 재계산 위해)
+      btns.forEach(b => b.style.flexBasis = '');
+
+      const rows = [];
+      let currentTop = null;
+      let row = [];
+
+      btns.forEach(b => {
+        const top = b.offsetTop;
+        if (currentTop === null || Math.abs(top - currentTop) < 2) {
+          row.push(b);
+          currentTop = top;
+        } else {
+          rows.push(row);
+          row = [b];
+          currentTop = top;
+        }
+      });
+      if (row.length) rows.push(row);
+
+      // 각 줄별로 남은 공간 나눠주기
+      const gapPx = parseFloat(getComputedStyle(area).gap) || 0;
+      rows.forEach(r => {
+        const parentWidth = area.clientWidth;
+        const totalBtnsW = r.reduce((sum, b) => sum + b.offsetWidth, 0);
+        const totalGapW = gapPx * (r.length - 1);
+        const extra = parentWidth - totalBtnsW - totalGapW;
+        if (extra > 0) {
+          const add = extra / r.length;   // 한 버튼씩 늘릴 폭
+          r.forEach(b => {
+            const w = b.offsetWidth;
+            b.style.flexBasis = `calc(${w}px + ${add}px)`;
+          });
+        }
+      });
+    }
+
+    // 최초 / 리사이즈 시 실행
+    window.addEventListener('load', spreadRowWidths);
+    window.addEventListener('resize', spreadRowWidths);
+
+
 
     // 차트 생성 & 갱신
     let chart;
