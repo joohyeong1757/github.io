@@ -94,6 +94,66 @@ table thead th{
 
     /* 치료/검사 버튼도 동일 스타일 사용 → 별도 색 없음 */
 
+    /* ====== 버튼 접기/펼치기 래퍼 ====== */
+/* 래퍼 기본 */
+#filter-wrap{
+  position:relative;
+  margin-bottom:24px;
+}
+
+/* 접힌 상태 */
+#filter-wrap.collapsed{
+  max-height:var(--collapseH,0px);
+  overflow:hidden;
+}
+
+
+/* 그라데이션 */
+#filter-wrap.collapsed::after{
+  content:'';
+  position:absolute; left:0; right:0; bottom:0;
+  height:38px;
+  background:linear-gradient(to bottom, rgba(255,255,255,0) 0%, #fff 100%);
+  pointer-events:none;
+  z-index:1;
+}
+
+/* 펼쳐진 상태 */
+#filter-wrap.expanded{ max-height:none; }
+#filter-wrap.expanded::after{ display:none; }
+
+/* 더보기 버튼 */
+.more-btn{
+  position:absolute; right:0; top:0; z-index:5;
+  width:var(--moreW);
+  height:46px; line-height:46px;
+  background:#fff;; color:#0b5ed7; border:1px solid #0d6efd;
+}
+/* hover / focus */
+.more-btn:hover:focus{
+  background:#0b5ed7;
+  color:#fff;
+}
+/* 펼쳐진(접기 상태) 때는 색 반전 */
+.more-btn[aria-expanded="true"]{
+  background:#fff;
+  color:#0d6efd;
+  border-color:#0d6efd;
+}
+.more-btn[aria-expanded="true"]:hover:focus{
+  background:#0b5ed7;
+  color:#fff;
+}
+/* 접힌 상태에서 오른쪽 공간 확보 (겹침 방지)
+#filter-wrap.collapsed #filter-buttons{
+  padding-right:calc(var(--moreW,40px) + .5rem);
+}*/
+/* 버튼 폭 CSS 변수로 예약 */
+#filter-wrap{ --moreW:40px; position:relative; }
+
+/* 항상 오른쪽에 예약 공간 확보 (접힘/펼침 둘 다) */
+#filter-buttons{ padding-right:calc(var(--moreW) + .5rem); }
+
     /* ------- 치료 타임라인 표 ------- */
     .treat-wrap{ margin-top:2rem; }
     .treat-table{ width:100%; border-collapse:collapse; font-size:.9rem; }
@@ -143,11 +203,11 @@ table thead th{
 
     /* ------- 반응형 ------- */
     @media (min-width:601px) and (max-width:1024px){
-      .chart-container{ width:95%; height:500px; }
+      .chart-container{ width:95%; height:400px; }
     }
     @media (max-width:600px){
       body{ padding:.5rem; }
-      .chart-container{ width:100%; height:500px; }
+      .chart-container{ width:100%; height:400px; }
       .treat-table col.col-date{ width:28%; }
   .treat-table col.col-type{ width:22%; }
   .treat-table col.col-desc{ width:50%; }
@@ -157,9 +217,9 @@ table thead th{
 
 <body>
   <h1>혈액검사 결과</h1>
-
-  <!-- 필터 버튼 -->
-  <div id="filter-buttons" role="group">
+  <!-- 기존 #filter-buttons 블록을 통째로 이걸로 교체 -->
+  <div id="filter-wrap" class="collapsed">
+  <div id="filter-buttons" class="btn-wrap" role="group">
     <button class="btn btn-outline-secondary active" data-cat="all">전체보기</button>
     <button id="btn-tx" class="btn btn-outline-secondary">치료 및 검사결과</button>
     <button class="btn btn-outline-secondary" data-cat="tumor">종양수치</button>
@@ -172,8 +232,10 @@ table thead th{
     <button class="btn btn-outline-secondary" data-cat="electrolyte">체액/전해질 균형</button>
     <button class="btn btn-outline-secondary" data-cat="nutrition">영양 상태/간단백 생성능</button>
     <button class="btn btn-outline-secondary" data-cat="bone">뼈 및 무기질 대사 상태</button>
+     <!-- ▼ 같은 줄에 들어갈 ‘더보기’ 버튼 -->
+     <button id="btn-more" type="button" class="btn btn-outline-secondary more-btn" aria-expanded="false">▼</button>
   </div>
-
+</div>
   <!-- 혈액검사 표 -->
   <div class="table-container">
     <table class="table table-bordered">
@@ -393,6 +455,62 @@ table thead th{
       txBtn.classList.toggle('active', !hidden);
       if(!hidden) txSection.scrollIntoView({ behavior:'smooth' });
     });
+    /* ====== 2줄부터 숨기기 세팅 ====== */
+    const wrap    = document.getElementById('filter-wrap');
+const btnBox  = document.getElementById('filter-buttons');
+const moreBtn = document.getElementById('btn-more');
+
+function setMoreBtnWidth(){
+  // 더보기 버튼 실제 폭을 CSS 변수로 넘겨 오른쪽 패딩 계산에 사용
+  document.documentElement.style.setProperty('--moreW', moreBtn.offsetWidth + 'px');
+}
+
+function calcCollapseHeight(){
+  const btns = [...btnBox.querySelectorAll('.btn')].filter(b => b !== moreBtn);
+  if(!btns.length){ moreBtn.style.display='none'; return; }
+
+  const firstTop = btns[0].offsetTop;
+  let row1Bottom = 0, row2Top = null, row2H = 0;
+
+  btns.forEach(b=>{
+    const t = b.offsetTop, h = b.offsetHeight;
+    if(t === firstTop){
+      row1Bottom = Math.max(row1Bottom, t + h);
+    }else{
+      if(row2Top === null) row2Top = t;
+      if(t === row2Top) row2H = Math.max(row2H, h);
+    }
+  });
+
+  if(row2Top === null){
+    wrap.classList.remove('collapsed','expanded');
+    moreBtn.style.display='none';
+    return;
+  }
+
+  moreBtn.style.display='';
+  const visibleH = row1Bottom + row2H * 0.2;   // 2번째 줄 20%만 노출
+  wrap.style.setProperty('--collapseH', visibleH + 'px');
+}
+
+moreBtn.addEventListener('click', ()=>{
+  const exp = wrap.classList.toggle('expanded');
+  wrap.classList.toggle('collapsed', !exp);
+  moreBtn.textContent = exp ? '▲' : '▼';
+  moreBtn.setAttribute('aria-expanded', exp);
+});
+
+window.addEventListener('load', ()=>{
+  setMoreBtnWidth();
+  calcCollapseHeight();
+});
+window.addEventListener('resize', ()=>{
+  setMoreBtnWidth();
+  calcCollapseHeight();
+});
+
+window.addEventListener('load',   calcCollapseHeight);
+window.addEventListener('resize', calcCollapseHeight);
 
     /* ---------- 차트 ---------- */
     
